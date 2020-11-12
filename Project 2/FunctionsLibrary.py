@@ -498,7 +498,7 @@ class NN(object):
     def compute_cost(A, Y, parameters, cost_function, lamb=0,penalty=None):
         m = Y.shape[1]
         if cost_function == "CrossEntropy":
-            cost = np.squeeze(-np.sum(np.multiply(np.log(A),Y))/m)
+            cost = np.squeeze(-np.sum(np.multiply(np.nan_to_num(np.log(A)),Y))/m)
         elif cost_function == "MSE":
             cost = np.squeeze(0.5*np.sum((Y-A)**2))
         else:
@@ -510,12 +510,12 @@ class NN(object):
             sum_weights = 0
             for l in range(1, L):
                 sum_weights = sum_weights + np.sum(np.square(parameters["W" + str(l)]))
-            cost = cost + sum_weights * (lamb/(2*m))
+            cost = cost + (lamb/(2*m))*sum_weights 
         elif penalty == "l1" and lamb != 0:
             sum_weights = 0
             for l in range(1, L):
                 sum_weights = sum_weights + np.sum(np.abs(parameters["W" + str(l)]))
-            cost = cost + sum_weights * (lamb/(2*m))
+            cost = cost + (lamb/(2*m))*sum_weights 
         return cost
 
     @staticmethod
