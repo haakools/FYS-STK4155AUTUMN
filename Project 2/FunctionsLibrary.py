@@ -72,7 +72,7 @@ def logisticX(X):
 
 class logisticmulticlass(object):
     
-    def __init__(self, X, y, optimizer, learning_rate= 0.01, batch_size = 32, max_epoch=100):
+    def __init__(self, X, y, optimizer, learning_rate= 0.01, batch_size = 32, max_epoch=100, penalty=None, lamb=0):
         
         self.X = X
         self.y = y
@@ -81,12 +81,17 @@ class logisticmulticlass(object):
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.max_epoch = max_epoch
+        self.penalty = penalty
+        self.lamb = lamb
     @staticmethod  
-    def compute_cost(X, y, beta, verbose=0):
+    def compute_cost(X, y, beta, penalty, lamb):
         # Computing the cost function 
-        C = beta.shape[1]
+        m, C = beta.shape
         N = X.shape[0]
-        cost = np.sum( np.multiply(y,X.dot(beta))-np.log(np.ones((N,C))+np.exp(X.dot(beta)) ))/N
+        cost = -np.sum( np.multiply(y,X.dot(beta))-np.log(np.ones((N,C))+np.exp(X.dot(beta)) ))/N
+        if penalty == "l2" and lamb != 0:
+            cost = cost + (lamb/(2*m))*np.sum(np.square(beta)) 
+        
         return cost
 
     def fit(self,X,y):
@@ -117,12 +122,13 @@ class logisticmulticlass(object):
 
                     # Calculating the gradient 
                     gradient = -X_batch.T.dot(y_batch[:,c]-y_batch_pred)
-
+                    if self.penalty =="l2" and self.lamb!=0:
+                        gradient = gradient+self.lamb*self.beta[:,c]/(2*N)
                     # Updating Beta
                     self.beta[:,c] -= self.learning_rate*gradient 
-
+ 
             # Computing the cost after each epoch storing it 
-            cost = self.compute_cost(X, y, self.beta)
+            cost = self.compute_cost(X, y, self.beta, self.penalty, self.lamb)
             self.costs.append(cost)
         return self
     
@@ -177,66 +183,6 @@ def accuracy(y,y_pred):
 def softmax(X):
     return np.exp(X-np.max(X))/np.sum(np.exp(X-np.max(X)))
 
-
-class logisticmulticlass(object):
-    
-    def __init__(self, X, y, optimizer, learning_rate= 0.01, batch_size = 32, max_epoch=100):
-        
-        self.X = X
-        self.y = y
-        self.C = y.shape[1]
-        self.optimizer = optimizer
-        self.learning_rate = learning_rate
-        self.batch_size = batch_size
-        self.max_epoch = max_epoch
-    @staticmethod  
-    def compute_cost(X, y, beta, verbose=0):
-        # Computing the cost function 
-        C = beta.shape[1]
-        N = X.shape[0]
-        cost = np.sum( np.multiply(y,X.dot(beta))-np.log(np.ones((N,C))+np.exp(X.dot(beta)) ))/N
-        return cost
-
-    def fit(self,X,y):
-        # Initializing beta as a matrix, where each row is corresponding to a model defining that class.        
-        self.beta = np.random.normal(0, 1, size=(X.shape[1], y.shape[1]))/y.shape[1]
-        
-        # Intializing the cost  
-        self.costs = []
-        
-        # Create randomized index for the batches
-        N = X.shape[0] 
-        idx = np.arange(0,N)
-        
-        for epoch in range(self.max_epoch):
-            # Randomizing the data for each epoch
-            np.random.shuffle(idx)
-            X = X[idx,:]
-            y = y[idx,:]
-
-            for i in range(0, N, self.batch_size):
-                
-                X_batch = X[i:i+self.batch_size,:]
-                y_batch = y[i:i+self.batch_size,:]
-                for c in range(0, self.C):
-                    
-                    # Batch prediction 
-                    y_batch_pred = sigmoid(X_batch.dot(self.beta[:,c]))
-
-                    # Calculating the gradient 
-                    gradient = -X_batch.T.dot(y_batch[:,c]-y_batch_pred)
-
-                    # Updating Beta
-                    self.beta[:,c] -= self.learning_rate*gradient 
-
-            # Computing the cost after each epoch storing it 
-            cost = self.compute_cost(X, y, self.beta)
-            self.costs.append(cost)
-        return self
-    
-    def predict(self,X):
-        self.y_pred = sigmoid(X.dot(self.beta))
-        return self.y_pred
 
 
 """
