@@ -10,7 +10,29 @@ from sklearn.model_selection import train_test_split
 
 def importtest():
     print("The module has been succesfully imported.")
+    
+def MSE(y,ypred):
+    """
+    Input:
+        y      :  The true data
+        ypred  :  The predicted data
+    Computes the MSE error
+    Output:
+        MSE : Mean Squared Error
+    """
+    MSE = np.mean((y-ypred)**2)
+    return MSE
 
+def R2(y,ypred):
+    """
+    Input:
+        y        : The true data
+        ypred    : The predicted data
+    Computes the R2 score
+    Output:
+        MSE      : Mean Squared Error
+        """
+    return 1-np.sum((y-ypred)**2)/np.sum((y-np.mean(y))**2)
 
 def FrankeFunction(x,y,noisefactor):
     """
@@ -72,12 +94,12 @@ def logisticX(X):
 
 class logisticmulticlass(object):
     
-    def __init__(self, X, y, optimizer, learning_rate= 0.01, batch_size = 32, max_epoch=100, penalty=None, lamb=0):
+    def __init__(self, X, y, optimization_method, learning_rate= 0.01, batch_size = 32, max_epoch=100, penalty=None, lamb=0):
         
         self.X = X
         self.y = y
         self.C = y.shape[1]
-        self.optimizer = optimizer
+        self.optimization_method = optimization_method
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.max_epoch = max_epoch
@@ -96,14 +118,24 @@ class logisticmulticlass(object):
 
     def fit(self,X,y):
         # Initializing beta as a matrix, where each row is corresponding to a model defining that class.        
-        self.beta = np.random.normal(0, 1, size=(X.shape[1], y.shape[1]))/y.shape[1]
+        self.beta = np.random.normal(0, 1, size=(X.shape[1], y.shape[1]))
         
         # Intializing the cost  
         self.costs = []
+        if self.optimization_method != "SGD":
+            v = 0
+            m = 0
+            rho_1 = 0.9
+            rho_2 = 0.999
+            epsilon = 1e-8
+            
         
         # Create randomized index for the batches
         N = X.shape[0] 
         idx = np.arange(0,N)
+        
+        
+        self.iter_no = 0
         
         for epoch in range(self.max_epoch):
             # Randomizing the data for each epoch
@@ -115,15 +147,46 @@ class logisticmulticlass(object):
                 
                 X_batch = X[i:i+self.batch_size,:]
                 y_batch = y[i:i+self.batch_size,:]
+                self.iter_no +=1
                 for c in range(0, self.C):
                     
                     # Batch prediction 
                     y_batch_pred = sigmoid(X_batch.dot(self.beta[:,c]))
 
                     # Calculating the gradient 
-                    gradient = -X_batch.T.dot(y_batch[:,c]-y_batch_pred)
                     if self.penalty =="l2" and self.lamb!=0:
+                        gradient = -X_batch.T.dot(y_batch[:,c]-y_batch_pred)
                         gradient = gradient+self.lamb*self.beta[:,c]/(2*N)
+                    else:
+                        gradient = -X_batch.T.dot(y_batch[:,c]-y_batch_pred)
+                    
+                    if self.optimization_method != "SGD":
+                        # SGD with momentum
+                        if self.optimization_method == "SGDM":
+                            v = rho_1*v-self.learning_rate*gradient
+                            self.beta[:,c] += v
+                            
+                            
+                        # RMSprop
+                        elif self.optimization_method =="RMSprop":
+                            v = rho_1*v+(1-rho_1)*gradient**2
+                            self.beta[:,c]-= self.learning_rate*gradient/(np.sqrt(v)+epsilon)
+                        
+                        # Adam
+                        elif self.optimization_method =="Adam":
+                            m=rho_1*m+(1-rho_2)*gradient
+                            v=rho_2*m+(1-rho_1)*gradient**2
+                            
+                            #mhat = m/(1-(rho_1**self.iter_no))
+                            #vhat = v/(1-(rho_2**self.iter_no))
+                            mvhat = ((1-rho_2**self.iter_no)/(1-rho_1**self.iter_no))*m/(np.sqrt(v+1))
+                            self.beta[:,c]-= self.learning_rate*mvhat
+                            
+                            #self.beta[:,c]-= self.learning_rate*mhat/(np.sqrt(vhat)+epsilon)
+                            
+                            
+                            
+                            
                     # Updating Beta
                     self.beta[:,c] -= self.learning_rate*gradient 
  
@@ -395,6 +458,25 @@ class NN(object):
         self.beta1 = beta1
         self.beta2 = beta2
 
+    def metric_plot(self):
+        fig, ax1 = plt.subplots()
+
+        color = 'tab:red'
+        ax1.plot(self.costs,color=color, label="Cost function")
+        ax1.set_xlabel("n epochs")
+        ax1.set_ylabel("Cost",color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()
+        color = 'tab:blue'
+        ax2.plot(self.acc, label="accuracy",color=color)
+        ax2.set_ylabel("Accuracy",color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        plt.title("Loss and accuracy after each epoch")
+        fig.show()
+        
+        
     @staticmethod
     def weights_init(layer_dims):
         parameters = {}
@@ -540,12 +622,21 @@ class NN(object):
         # Stochastic Gradient Descent with Momentum
         elif optimization_method == "SGDM":
             for l in range(L):
+                opt_parameters["vdb"+str(l+1)] = beta1*opt_parameters["vdb"+str(l+1)] - learning_rate*grads["db" + str(l + 1)]
+                opt_parameters["vdW"+str(l+1)] = beta1*opt_parameters["vdW"+str(l+1)] - learning_rate*grads["db" + str(l + 1)]
+                
+                parameters["W" + str(l+1)] = parameters["W" + str(l+1)] + opt_parameters["vdW"+str(l+1)]
+                parameters["b" + str(l+1)] = parameters["b" + str(l+1)] + opt_parameters["vdb"+str(l+1)]
+
+                
+        elif optimization_method == "RMSprop":
+            for l in range(L):
                 opt_parameters["vdb"+str(l+1)] = beta1*opt_parameters["vdb"+str(l+1)] + (1-beta1)*grads["db" + str(l + 1)]
                 opt_parameters["vdW"+str(l+1)] = beta1*opt_parameters["vdW"+str(l+1)] + (1-beta1)*grads["dW" + str(l + 1)]
                 
                 parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate*opt_parameters["vdW"+str(l+1)]
                 parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate*opt_parameters["vdb"+str(l+1)]
-
+        
         # Adaptive Moment Estimator
         elif optimization_method == "Adam":
             # From wikiepdia on Adaptive Moment Estimation
