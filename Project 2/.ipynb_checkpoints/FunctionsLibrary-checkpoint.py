@@ -229,8 +229,10 @@ def regressionX(x, y, n ):
 
     return X
 
-# One-hot in numpy (from lecture notes week 41)
 def to_categorical_numpy(integer_vector):
+    # One-hot in numpy (from lecture notes week 41)
+    #  transforms label vecotr [1,5,2,3]
+    # into a "one-hot encoded" vector with length equal to the maximum class
     n_inputs = len(integer_vector)
     n_categories = np.max(integer_vector) + 1
     onehot_vector = np.zeros((n_inputs, n_categories))
@@ -239,25 +241,16 @@ def to_categorical_numpy(integer_vector):
     return onehot_vector
 
 def accuracy(y,y_pred):
+    # Calculates the accuracy of the prediction as a decimal [0,1]
     y = np.argmax(y, axis=1) #Returns one-hot encoded vectors back to class integers
     acc = np.sum(y==y_pred)/len(y)
     return acc
 
 def softmax(X):
+    #  Numerically stable softmax by subtracting the maximum value from the array
+    # to "prevent overflow".
     return np.exp(X-np.max(X))/np.sum(np.exp(X-np.max(X)))
 
-
-
-"""
-Should create a class for both regression and logistic-regression. 
-The regression class should specifiy which regression method to be used
- - Ordinary Least Squares
- - Ridge
- - Lasso if needed in the problems (since this is a class by itself imported by sklearn it will probably not be needed)
-
-It should also take in the parameters needed which are
-
-"""
 
 def SVDinv(A):
     """
@@ -392,7 +385,7 @@ class Regression(object):
 Neural Network class beneath
 with inspiration from
 https://medium.com/@udaybhaskarpaila/multilayered-neural-network-from-scratch-using-python-c0719a646855
-and Nielsen 2015 text
+and Nielsen 2015 text and lecture notes
 """
 # Activation Functions
 def sigmoid(X,derivative=False):

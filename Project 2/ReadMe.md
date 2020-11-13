@@ -1,13 +1,54 @@
 # Read Me for Project 2 - FYS-STK4155 Autumn 2020
 
-Initially a file for each of the methods listed as
+FYS-STK4155 Project Files for Autumn 2020 UiO
 
- - Neural Network for regression
- - Neural Network for classification
- - Logistic regression
+## Group members
+```
+Håkon Berggren Olsen
+Elisavet Dombrovksi
+Lasse T. Keetz
+```
+
+## This is the Github for the delivery of Project 2, FYS-STK4155 for Autumn 2020, UiO
 
 
-Hopefully it would be really tide to have the class environments for NN in a seperate file to be called upon. Also having the arcitecture of the logstic regression in a different, including the idea of gradient descent.
-This would make the reading experience more structured and the "main" more about the figures and central ideas we want to discuss.
+```
+All the data for this project is inside the folder named Project 1.
 
-### Ulitmately use more time making graphs and exploring.
+The numpy analysis was done in python Jupyter Notebook.
+```
+
+### Report PDF:
+```
+The report is inside the folder names Project 1.
+It is called
+"Project2FYSSTK4155_aut2020.pdf"
+
+```
+
+
+### Main script:
+```
+The main script is called:
+"Project2_main.ipynb" 
+And is where the figures and calculatin refererred to in the text are produced.
+```
+
+### Test run:
+```
+The test run for benchmarking our code is called:
+ "testrun.ipynb"
+ ```
+### Function library:
+```
+THe function library contatining all the function handles imported as
+"import functions as fn"
+is found in the file called:
+"FunctionsLibrary.py"
+```
+
+### Result Folder
+```
+The result folder with all the images used in the report is found in the folder called
+"Images"
+```

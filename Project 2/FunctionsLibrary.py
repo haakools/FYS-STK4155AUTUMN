@@ -385,7 +385,7 @@ class Regression(object):
 Neural Network class beneath
 with inspiration from
 https://medium.com/@udaybhaskarpaila/multilayered-neural-network-from-scratch-using-python-c0719a646855
-and Nielsen 2015 text
+and Nielsen 2015 text and lecture notes
 """
 # Activation Functions
 def sigmoid(X,derivative=False):
